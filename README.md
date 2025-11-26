@@ -39,8 +39,6 @@ Este repositorio contiene scripts y recursos para desplegar un clúster simple d
 ## Instrucciones rápidas (ejemplo con Vagrant)
 1. Clona este repositorio:
    ```bash
-   git clone <tu-repo-url>.git
-   cd <tu-repo>
 
 
 # Proyecto: Cluster WordPress con Balanceador y Servidores Web + NFS + MariaDB

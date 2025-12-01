@@ -344,7 +344,7 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 ## 1.1 Acceder al servicio VPC
 📌 Navega en AWS → *VPC* → *Your VPCs* → **Create VPC**
 
-![Descripción de la imagen](/imagen.png)
+![Descripción de la imagen](capturas/VPC.png)
 
 ---
 
@@ -353,7 +353,7 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 - IPv4 CIDR: `10.0.0.0/16`
 - Tenancy: Default
 
-👉 *Inserta aquí la captura de la configuración final antes de crearla*
+![Descripción de la imagen](capturas/ConfVPC.png)
 
 ---
 
@@ -378,6 +378,8 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 - CIDR: `10.0.3.0/24`
 - AZ: `eu-west-1a`
 
+![Descripción de la imagen](capturas/Subredes.png)
+
 ---
 
 # 🌍 3. Crear Internet Gateway
@@ -385,14 +387,16 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 ## 3.1 Crear el IGW
 VPC → *Internet Gateways* → **Create Internet Gateway**
 
-👉 *Inserta aquí la captura de la creación*
+![Descripción de la imagen](capturas/NatGateway.png)
+
 
 ---
 
 ## 3.2 Asociarlo a la VPC
 - Seleccionar IGW → *Actions* → Attach to VPC
 
-👉 *Inserta aquí la captura de la asociación*
+![Descripción de la imagen](capturas/igwinternet.png)
+
 
 ---
 
@@ -401,7 +405,7 @@ VPC → *Internet Gateways* → **Create Internet Gateway**
 ## 4.1 Crear Elastic IP
 EC2 → Network & Security → **Elastic IPs**
 
-👉 *Inserta captura del Elastic IP creado*
+![Descripción de la imagen](capturas/Elastica.png)
 
 ---
 
@@ -411,7 +415,8 @@ VPC → *NAT Gateways* → **Create NAT Gateway**
 - Subred: `Public-Subnet-A`
 - Elastic IP: creado antes
 
-👉 *Inserta captura del NAT Gateway*
+![Descripción de la imagen](capturas/NatGateway.png)
+
 
 ---
 
@@ -419,13 +424,13 @@ VPC → *NAT Gateways* → **Create NAT Gateway**
 
 ## 5.1 Tabla de rutas pública
 - Ruta: `0.0.0.0/0` → IGW
-
+- 
 ---
 
 ## 5.2 Tabla de rutas privada (para BD)
 - Ruta: `0.0.0.0/0` → NAT Gateway
 
-👉 *Inserta captura de la tabla privada*
+![Descripción de la imagen](capturas/Tablasenrutamiento.png)
 
 ---
 
@@ -437,7 +442,7 @@ Reglas de entrada:
 - 443 (HTTPS) → 0.0.0.0/0
 - 22 (SSH) → Tu IP
 
-👉 *Inserta captura del SG*
+![Descripción de la imagen](capturas/ReglasBalanceador.png)
 
 ---
 
@@ -447,23 +452,22 @@ Reglas:
 - NFS 2049 → SG-NFS  
 - MySQL 3306 → SG-DB  
 
-👉 *Inserta captura del SG-WEB*
+![Descripción de la imagen](capturas/Reglasweb.png)
 
 ---
 
 ## 6.3 SG-DB (MariaDB)
 Reglas:
-- 3306 → SG-WEB  
-
-👉 *Inserta captura*
-
+- 3306 → SG-WEB
+- 
+![Descripción de la imagen](capturas/Reglasdb.png)
 ---
 
 ## 6.4 SG-NFS
 Reglas:
 - 2049 → SG-WEB  
 
-👉 *Inserta captura*
+![Descripción de la imagen](capturas/Reglanfs.png)
 
 ---
 
@@ -476,7 +480,7 @@ Reglas:
 - SG: **SG-BAL**  
 - Script: `balanceador.sh`  
 
-👉 *Inserta captura del lanzamiento*
+![Descripción de la imagen](capturas/Instanciabal.png)
 
 ---
 
@@ -487,8 +491,8 @@ Reglas:
 - SG: **SG-WEB**  
 - Script: `web.sh`  
 
-👉 *Inserta captura de Web1*  
-👉 *Inserta captura de Web2*
+![Descripción de la imagen](capturas/Instanciaweb1.png)
+![Descripción de la imagen](capturas/Instanciaweb2.png)
 
 ---
 
@@ -498,7 +502,7 @@ Reglas:
 - SG: SG-DB  
 - Script: `db.sh`
 
-👉 *Inserta captura*
+![Descripción de la imagen](capturas/Intanciadb.png)
 
 ---
 
@@ -508,7 +512,7 @@ Reglas:
 - SG: SG-NFS  
 - Script: `nfs.sh`
 
-👉 *Inserta captura*
+![Descripción de la imagen](capturas/Instancianfs.png)
 
 ---
 
@@ -516,3 +520,5 @@ Reglas:
 
 ## 8.1 Comprobar el balanceo
 Acceder varias veces al dominio:
+
+![Descripción de la imagen](capturas/Comprobacipon.png)

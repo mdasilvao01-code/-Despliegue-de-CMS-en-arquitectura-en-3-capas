@@ -349,7 +349,7 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 ---
 
 ## 1.2 Configurar la nueva VPC
-- Nombre: `VPC-WordPress`
+- Nombre: `mario-vpc`
 - IPv4 CIDR: `10.0.0.0/16`
 - Tenancy: Default
 
@@ -360,21 +360,21 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 # 🌐 2. Crear Subredes
 
 ## 2.1 Subred Pública 1 (Zona A)
-- Nombre: `Public-Subnet-A`
+- Nombre: `Publica`
 - CIDR: `10.0.1.0/24`
 - AZ: `eu-west-1a`
 
 ---
 
-## 2.2 Subred Pública 2 (Zona B)
-- Nombre: `Public-Subnet-B`
+## 2.2 Subred Privada 1 (Zona B)
+- Nombre: `PrivadaA-mario`
 - CIDR: `10.0.2.0/24`
 - AZ: `eu-west-1b`
 
 ---
 
-## 2.3 Subred Privada (Base de datos)
-- Nombre: `Private-DB-Subnet`
+## 2.3 Subred Privada 2 (Base de datos)
+- Nombre: `PrivadaB-mario`
 - CIDR: `10.0.3.0/24`
 - AZ: `eu-west-1a`
 
@@ -460,7 +460,7 @@ Reglas:
 ## 6.3 SG-DB (MariaDB)
 Reglas:
 - 3306 → SG-WEB
-- 
+
 ![Descripción de la imagen](capturas/Reglasdb.png)
 ---
 
@@ -475,7 +475,7 @@ Reglas:
 # 🖥️ 7. Crear las instancias EC2
 
 ## 7.1 Instancia del Balanceador
-- AMI: Ubuntu 22.04  
+- AMI: debian
 - Tipo: t2.micro  
 - Subred: Pública  
 - SG: **SG-BAL**  
@@ -486,9 +486,9 @@ Reglas:
 ---
 
 ## 7.2 Instancias Web (WEB1 / WEB2)
-- AMI: Ubuntu  
+- AMI: debian  
 - Tipo: t2.micro  
-- Subred: Pública  
+- Subred: PrivadaA
 - SG: **SG-WEB**  
 - Script: `web.sh`  
 
@@ -498,8 +498,8 @@ Reglas:
 ---
 
 ## 7.3 Instancia de la Base de Datos
-- AMI: Ubuntu  
-- Subred: **Privada**  
+- AMI: debian
+- Subred: PrivadaB
 - SG: SG-DB  
 - Script: `db.sh`
 
@@ -508,8 +508,8 @@ Reglas:
 ---
 
 ## 7.4 Instancia del Servidor NFS
-- AMI: Ubuntu  
-- Subred: Pública  
+- AMI: debian 
+- Subred: PrivadaA
 - SG: SG-NFS  
 - Script: `nfs.sh`
 

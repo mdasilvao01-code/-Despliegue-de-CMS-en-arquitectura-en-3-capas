@@ -14,26 +14,23 @@ Incluye los scripts completos de despliegue:
 
 # 📑 Índice
 
-1. [🧱 Arquitectura General](#🧱-arquitectura-general)
-2. [📦 Componentes del Proyecto](#📦-componentes-del-proyecto)
-3. [🛡️ Security Groups AWS](#🛡️-security-groups-aws)
-4. [🌀 Scripts de Configuración](#🌀-scripts-de-configuración)
+1. [🧱 Arquitectura General](#arquitectura-general)
+2. [📦 Componentes del Proyecto](#componentes-del-proyecto)
+3. [🛡️ Security Groups AWS](#security-groups-aws)
+4. [🌀 Scripts de Configuración](#scripts-de-configuración)
    - [Balanceador](#balanceador)
    - [Base de Datos (MariaDB)](#base-de-datos-mariadb)
    - [Servidor NFS](#servidor-nfs)
    - [Servidores Web](#servidores-web)
-5. [🧪 Pruebas Finales](#🧪-pruebas-finales)
-6. [📎 Mejoras Futuras](#📎-mejoras-futuras)
-
----
-
+5. [🧪 Pruebas Finales](#pruebas-finales)
 
 
 ---
+
 
 # 🧱 Arquitectura General — Despliegue CMS en AWS (3 Capas)
 
-La infraestructura está diseñada siguiendo un modelo profesional de **3 capas**, asegurando separación de servicios, mayor seguridad, escalabilidad y alta disponibilidad. La comunicación se realiza mediante subredes privadas y públicas dentro de una VPC en AWS.
+La infraestructura está diseñada siguiendo un modelo profesional de **3 capas**, asegurando separación de servicios, mayor seguridad, escalabilidad y alta disponibilidad. La comunicación se realiza mediante subredes privadas y públicas dentro de una VPC en AWS
 
 ---
 

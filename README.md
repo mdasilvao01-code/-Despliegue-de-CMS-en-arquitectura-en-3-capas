@@ -1,116 +1,216 @@
-# 📌 Despliegue de CMS en Arquitectura de 3 Capas  
-### Cluster WordPress con Balanceador Apache + NFS + MariaDB (Vagrant / Bash)
+# 🚀 Despliegue Completo CMS en AWS — Arquitectura 3 Capas  
+🔥 *Balanceador + Web1/Web2 + Base de Datos + NFS* 🔥  
 
-## 📝 Descripción  
-Este proyecto despliega una arquitectura distribuida de **WordPress** compuesta por:
+Este proyecto despliega un CMS (WordPress) en AWS utilizando una infraestructura profesional de **3 capas**, con servidores conectados por NFS, una base de datos MariaDB privada y un balanceador Apache2 con SSL.
 
-✔ **Balanceador Apache** con `mod_proxy_balancer` + SSL autofirmado  
-✔ **Dos nodos web** con Apache + PHP  
-✔ **Almacenamiento compartido (wp-content) vía NFS**  
-✔ **Base de datos central con MariaDB**  
-✔ **Todo automatizado con scripts Bash (opcionalmente con Vagrant)**  
+Incluye los scripts completos de despliegue:
 
-> Ideal para prácticas de Sistemas, Redes, Virtualización y DevOps.
+- `balanceador.sh`
+- `db.sh` (MariaDB)
+- `nfs.sh` (Servidor NFS)
+- `web.sh` (Servidores Web conectados a NFS)
 
 ---
 
-## 🏗️ Arquitectura (3 capas)
+# 📑 Índice
+
+1. [🧱 Arquitectura General](#🧱-arquitectura-general)
+2. [📦 Componentes del Proyecto](#📦-componentes-del-proyecto)
+3. [🛡️ Security Groups AWS](#🛡️-security-groups-aws)
+4. [🌀 Scripts de Configuración](#🌀-scripts-de-configuración)
+   - [Balanceador](#balanceador)
+   - [Base de Datos (MariaDB)](#base-de-datos-mariadb)
+   - [Servidor NFS](#servidor-nfs)
+   - [Servidores Web](#servidores-web)
+5. [🧪 Pruebas Finales](#🧪-pruebas-finales)
+6. [📎 Mejoras Futuras](#📎-mejoras-futuras)
+
+---
+
 
 
 ---
 
-## 📂 Archivos incluidos
+# 📦 Componentes del Proyecto
 
-| Archivo | Función |
-|--------|---------|
-| `balanceador.sh` | Instala Apache como balanceador con SSL. |
-| `web.sh` | Instala Apache+PHP, descarga WordPress y monta NFS. |
-| `db_nfs.sh` | Configura servidor NFS + base de datos MariaDB. |
-| `Vagrantfile` (opcional) | Permite desplegar todo con `vagrant up`. |
+| Componente | Función |
+|-----------|---------|
+| **Balanceador** | SSL + Proxy + Load Balancing |
+| **NFS Server** | Directorio compartido para WordPress |
+| **Web1 / Web2** | Apache + PHP conectados al NFS |
+| **MariaDB** | Base de datos del CMS |
 
 ---
 
-## 📌 Script: Balanceador Apache (`balanceador.sh`)
+# 🛡️ Security Groups AWS
+
+| SG | Permite | Desde |
+|----|---------|--------|
+| **SG-BAL** | 80/443 | Internet |
+| **SG-WEB** | 80 | BAL |
+| **SG-NFS** | 2049 | WEB1/WEB2 |
+| **SG-DB** | 3306 | WEB1/WEB2 |
+| **SG-SSH** | 22 | Tu IP |
+
+---
+
+# 🌀 Scripts de Configuración
+
+---
+
+# 🔥 **Balanceador**
+Archivo: `balanceador.sh`
 
 ```bash
 #!/bin/bash
-set -euo pipefail
+# Hostname
+sudo hostnamectl set-hostname BalanceadorMarioDaSilva
 
-sudo apt-get update -y
-sudo apt-get install -y apache2 openssl
+#Instalamos Apache 
+sudo apt update
+sudo apt install apache2 -y
+sudo a2enmod proxy proxy_http proxy_balancer lbmethod_byrequests proxy_connect ssl headers
 
-sudo a2enmod ssl proxy proxy_balancer proxy_http lbmethod_byrequests headers
+#Reiniciamos Apache para cargar modulos
+sudo systemctl restart apache2
 
-sudo mkdir -p /etc/apache2/ssl
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout /etc/apache2/ssl/balancer.key \
-  -out /etc/apache2/ssl/balancer.crt \
-  -subj "/CN=balanceador.local"
+#Copiamos el archivo de config base
+sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/load-balancer.conf
 
-cat <<EOF | sudo tee /etc/apache2/sites-available/balancer.conf
+sudo tee /etc/apache2/sites-available/load-balancer.conf > /dev/null <<EOF
+<VirtualHost *:80>
+    ServerName marioaws.onthewifi.com
+    Redirect permanent / https://marioaws.onthewifi.com/
+</VirtualHost>
+EOF
+
+sudo tee /etc/apache2/sites-available/load-balancer-ssl.conf > /dev/null <<EOF
+<IfModule mod_ssl.c>
 <VirtualHost *:443>
-   ServerName balanceador.local
-   SSLEngine on
-   SSLCertificateFile /etc/apache2/ssl/balancer.crt
-   SSLCertificateKeyFile /etc/apache2/ssl/balancer.key
+    ServerName marioaws.onthewifi.com
 
-   <Proxy "balancer://wpcluster">
-      BalancerMember http://192.168.10.20
-      BalancerMember http://192.168.10.21
-   </Proxy>
+    SSLEngine On
+    SSLCertificateFile /etc/letsencrypt/live/marioaws.onthewifi.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/marioaws.onthewifi.com/privkey.pem
 
-   ProxyPass / balancer://wpcluster/
-   ProxyPassReverse / balancer://wpcluster/
+    <Proxy "balancer://mycluster">
+        ProxySet stickysession=JSESSIONID|ROUTEID
+        BalancerMember http://10.0.2.45:80
+        BalancerMember http://10.0.2.184:80
+    </Proxy>
 
-   Header add X-Student "Mario"
+    ProxyPass "/" "balancer://mycluster/"
+    ProxyPassReverse "/" "balancer://mycluster/"
+</VirtualHost>
+</IfModule>
+EOF
+
+sudo a2dissite 000-default.conf
+sudo a2ensite load-balancer.conf
+sudo a2ensite load-balancer-ssl.conf
+sudo systemctl reload apache2
+
+```
+
+# 🔥 **NFS**
+Archivo: `nfs.sh`
+
+```bash
+
+#!/bin/bash
+set -e
+
+# Cambiar hostname
+sudo hostnamectl set-hostname DBmariodasilva
+
+# Instalar MariaDB
+sudo apt update
+sudo apt install mariadb-server -y
+
+sudo mysql <<EOF
+CREATE DATABASE mariowordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+CREATE USER 'mario'@'10.0.2.45' IDENTIFIED BY 'abcd';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.45';
+
+CREATE USER 'mario'@'10.0.2.184' IDENTIFIED BY 'abcd';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.184';
+
+FLUSH PRIVILEGES;
+EOF
+
+sudo sed -i 's/^bind-address.*/bind-address = 10.0.3.111/' /etc/mysql/mariadb.conf.d/50-server.cnf
+
+sudo systemctl restart mariadb
+
+```
+
+# 🔥 **db**
+Archivo: `db.sh`
+```bash
+
+#!/bin/bash
+set -e
+
+# Cambiar hostname
+sudo hostnamectl set-hostname DBmariodasilva
+
+# Instalar MariaDB
+sudo apt update
+sudo apt install mariadb-server -y
+
+sudo mysql <<EOF
+CREATE DATABASE mariowordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+CREATE USER 'mario'@'10.0.2.45' IDENTIFIED BY 'abcd';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.45';
+
+CREATE USER 'mario'@'10.0.2.184' IDENTIFIED BY 'abcd';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.184';
+
+FLUSH PRIVILEGES;
+EOF
+
+sudo sed -i 's/^bind-address.*/bind-address = 10.0.3.111/' /etc/mysql/mariadb.conf.d/50-server.cnf
+
+sudo systemctl restart mariadb
+
+```
+
+# 🔥 **web**
+Archivo: `web.sh`
+
+```bash
+
+#!/bin/bash
+set -e
+sudo hostnamectl set-hostname WEBmariodasilva
+
+sudo apt update
+sudo apt install nfs-common apache2 php libapache2-mod-php php-mysql php-curl php-gd php-xml php-mbstring php-xmlrpc php-zip php-soap php-intl -y
+
+sudo mkdir -p /nfs/general
+
+sudo mount 10.0.2.232:/var/nfs/general /nfs/general
+echo "10.0.2.232:/var/nfs/general  /nfs/general  nfs _netdev,auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0" | sudo tee -a /etc/fstab
+
+sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/wordpress.conf
+
+sudo tee /etc/apache2/sites-available/wordpress.conf > /dev/null <<EOF
+<VirtualHost *:80>
+    ServerName https://marioaws.onthewifi.com
+    DocumentRoot /nfs/general/wordpress/
+
+    <Directory /nfs/general/wordpress>
+        Options +FollowSymlinks
+        AllowOverride All
+        Require all granted
+    </Directory>
 </VirtualHost>
 EOF
 
 sudo a2dissite 000-default.conf
-sudo a2ensite balancer.conf
-sudo systemctl restart apache2
+sudo a2ensite wordpress.conf
+sudo systemctl reload apache2
 
-#!/bin/bash
-set -euo pipefail
-
-sudo apt-get update -y
-sudo apt-get install -y apache2 php php-mysql php-gd php-xml php-mbstring nfs-common wget tar
-
-sudo mkdir -p /var/www/html
-echo "192.168.10.40:/srv/wp-shared /var/www/html/wp-content nfs defaults 0 0" | sudo tee -a /etc/fstab
-sudo mount -a
-
-wget https://wordpress.org/latest.tar.gz -P /tmp
-tar -xzf /tmp/latest.tar.gz -C /tmp
-sudo cp -r /tmp/wordpress/* /var/www/html/
-
-sudo chown -R www-data:www-data /var/www/html
-sudo systemctl restart apache2
-
-#!/bin/bash
-set -euo pipefail
-
-# NFS
-sudo apt-get update -y
-sudo apt-get install -y nfs-kernel-server
-
-sudo mkdir -p /srv/wp-shared
-sudo chown -R 33:33 /srv/wp-shared
-sudo chmod -R 755 /srv/wp-shared
-
-echo "/srv/wp-shared 192.168.10.0/24(rw,sync,no_subtree_check,all_squash,anonuid=33,anongid=33)" | sudo tee /etc/exports
-sudo exportfs -ra
-sudo systemctl restart nfs-kernel-server
-
-# MariaDB
-sudo apt-get install -y mariadb-server
-sudo systemctl enable mariadb --now
-
-sudo mysql -e "UPDATE mysql.user SET Password=PASSWORD('abcd') WHERE User='root';" || true
-sudo mysql -e "DELETE FROM mysql.user WHERE User='';" || true
-sudo mysql -e "DROP DATABASE IF EXISTS test;" || true
-sudo mysql -e "FLUSH PRIVILEGES;"
-
-mysql -uroot -p"abcd" -e "CREATE DATABASE IF NOT EXISTS mario CHARACTER SET utf8mb4;"
-mysql -uroot -p"abcd" -e "CREATE USER IF NOT EXISTS 'mario'@'192.168.10.%' IDENTIFIED BY 'abcd';"
-mysql -uroot -p"abcd" -e "GRANT ALL PRIVILEGES ON mario.* TO 'mario'@'192.168.10.%'; FLUSH PRIVILEGES;"
+`🧱 Arquitectura General

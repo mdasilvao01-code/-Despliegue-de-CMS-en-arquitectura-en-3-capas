@@ -425,6 +425,7 @@ VPC → *NAT Gateways* → **Create NAT Gateway**
 ## 5.1 Tabla de rutas pública
 - Ruta: `0.0.0.0/0` → IGW
 - 
+![Descripción de la imagen](capturas/igwinternet.png)
 ---
 
 ## 5.2 Tabla de rutas privada (para BD)
@@ -521,4 +522,4 @@ Reglas:
 ## 8.1 Comprobar el balanceo
 Acceder varias veces al dominio:
 
-![Descripción de la imagen](capturas/Comprobacipon.png)
+![Descripción de la imagen](capturas/Comprobacion.png)

@@ -364,8 +364,6 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 - CIDR: `10.0.1.0/24`
 - AZ: `eu-west-1a`
 
-👉 *Inserta aquí la captura de la creación de la subred pública*
-
 ---
 
 ## 2.2 Subred Pública 2 (Zona B)
@@ -373,16 +371,12 @@ Este documento presenta **todas las fases de construcción de la infraestructura
 - CIDR: `10.0.2.0/24`
 - AZ: `eu-west-1b`
 
-👉 *Inserta aquí la captura*
-
 ---
 
 ## 2.3 Subred Privada (Base de datos)
 - Nombre: `Private-DB-Subnet`
 - CIDR: `10.0.3.0/24`
 - AZ: `eu-west-1a`
-
-👉 *Inserta aquí la captura*
 
 ---
 
@@ -425,8 +419,6 @@ VPC → *NAT Gateways* → **Create NAT Gateway**
 
 ## 5.1 Tabla de rutas pública
 - Ruta: `0.0.0.0/0` → IGW
-
-👉 *Inserta captura de la tabla pública*
 
 ---
 

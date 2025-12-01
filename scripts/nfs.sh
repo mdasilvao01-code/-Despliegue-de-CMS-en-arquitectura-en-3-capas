@@ -1,21 +1,27 @@
 #!/bin/bash
-set -euo pipefail
+set -e
+sudo hostnamectl set-hostname NFSmariodasilva
 
-# Instalar NFS server
-sudo apt-get update -y
-sudo apt-get install -y nfs-kernel-server
+#Instalamos el servidor NFS
+sudo apt update
+sudo apt install nfs-kernel-server -y
 
-# Crear carpeta compartida
-sudo mkdir -p /srv/wp-shared
+#Creamos la carpeta a compartir 
+sudo mkdir -p /var/nfs/general
+sudo chown nobody:nogroup /var/nfs/general
 
-# Asignar propietario www-data (UID/GID 33)
-sudo chown -R 33:33 /srv/wp-shared
-sudo chmod -R 755 /srv/wp-shared
+#Añadimos a los servidores web 
+echo "/var/nfs/general 10.0.2.45(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports
+echo "/var/nfs/general 10.0.2.184(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports
 
-# Exportar carpeta para la red privada
-echo "/srv/wp-shared 192.168.10.0/24(rw,sync,no_subtree_check,all_squash,anonuid=33,anongid=33)" | sudo tee /etc/exports
+#Descargamos el wordpress
+sudo apt install unzip -y
+sudo wget -O /var/nfs/general/latest.zip https://wordpress.org/latest.zip
+sudo unzip /var/nfs/general/latest.zip -d /var/nfs/general/
 
-# Aplicar exportación y reiniciar servicio
-sudo exportfs -ra
-sudo systemctl enable nfs-kernel-server
+#Asignamos los correspondientes permisos y reiniciamos el servicio 
+sudo chown -R www-data:www-data /var/nfs/general/wordpress
+sudo find /var/nfs/general/wordpress/ -type d -exec chmod 755 {} \;
+sudo find /var/nfs/general/wordpress/ -type f -exec chmod 644 {} \;
 sudo systemctl restart nfs-kernel-server
+sudo exportfs -a

@@ -1,30 +1,29 @@
 #!/bin/bash
-set -euo pipefail
+set -e
 
+# Cambiar hostname
+sudo hostnamectl set-hostname DBmariodasilva
 
-sudo apt-get update -y
-sudo apt-get install -y mariadb-server
+# Instalar MariaDB
+sudo apt update
+sudo apt install mariadb-server -y
 
-sudo systemctl enable mariadb
-sudo systemctl start mariadb
+sudo mysql <<EOF
+CREATE DATABASE mariowordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
-# Endurecer minimamente (sin interaccion)
-sudo mysql -e "UPDATE mysql.user SET Password=PASSWORD('abcd') WHERE User='root';" || true
-sudo mysql -e "DELETE FROM mysql.user WHERE User='';" || true
-sudo mysql -e "DROP DATABASE IF EXISTS test;" || true
-sudo mysql -e "FLUSH PRIVILEGES;" || true
+CREATE USER 'mario'@'10.0.2.45' IDENTIFIED BY 'abcd';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.45';
 
-# Crear BD y usuario wp
-mysql -uroot -p"abcd" -e "CREATE DATABASE IF NOT EXISTS mario CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -uroot -p"abcd" -e "CREATE USER IF NOT EXISTS mario'@'192.168.10.%' IDENTIFIED BY 'abcd';"
-mysql -uroot -p"abcd" -e "GRANT ALL PRIVILEGES ON mario.* TO 'mario'@'192.168.10.%'; FLUSH PRIVILEGES;"
+CREATE USER 'mario'@'10.0.2.184' IDENTIFIED BY 'abcd';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.184';
 
-
-# Sugerencia para wp-config.php 
-cat <<EOF
-Para completar WordPress en Web1/Web2:
-DB_NAME: mario
-DB_USER: mario
-DB_PASSWORD: abcd
-DB_HOST: 192.168.10.40
+FLUSH PRIVILEGES;
 EOF
+
+#Configurar bind-address en MariaDB
+sudo sed -i 's/^bind-address.*/bind-address = 10.0.3.111/' /etc/mysql/mariadb.conf.d/50-server.cnf
+
+#Reiniciar MariaDB
+sudo systemctl restart mariadb
+
+

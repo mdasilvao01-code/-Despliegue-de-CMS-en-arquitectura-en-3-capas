@@ -221,32 +221,33 @@ sudo systemctl reload apache2
 Archivo: `nfs.sh`
 
 ```bash
-
 #!/bin/bash
 set -e
+sudo hostnamectl set-hostname NFSmariodasilva
 
-# Cambiar hostname
-sudo hostnamectl set-hostname DBmariodasilva
-
-# Instalar MariaDB
+#Instalamos el servidor NFS
 sudo apt update
-sudo apt install mariadb-server -y
+sudo apt install nfs-kernel-server -y
 
-sudo mysql <<EOF
-CREATE DATABASE mariowordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+#Creamos la carpeta a compartir 
+sudo mkdir -p /var/nfs/general
+sudo chown nobody:nogroup /var/nfs/general
 
-CREATE USER 'mario'@'10.0.2.45' IDENTIFIED BY 'abcd';
-GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.45';
+#Añadimos a los servidores web 
+echo "/var/nfs/general 10.0.2.45(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports
+echo "/var/nfs/general 10.0.2.184(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports
 
-CREATE USER 'mario'@'10.0.2.184' IDENTIFIED BY 'abcd';
-GRANT ALL PRIVILEGES ON wordpress.* TO 'mario'@'10.0.2.184';
+#Descargamos el wordpress
+sudo apt install unzip -y
+sudo wget -O /var/nfs/general/latest.zip https://wordpress.org/latest.zip
+sudo unzip /var/nfs/general/latest.zip -d /var/nfs/general/
 
-FLUSH PRIVILEGES;
-EOF
-
-sudo sed -i 's/^bind-address.*/bind-address = 10.0.3.111/' /etc/mysql/mariadb.conf.d/50-server.cnf
-
-sudo systemctl restart mariadb
+#Asignamos los correspondientes permisos y reiniciamos el servicio 
+sudo chown -R www-data:www-data /var/nfs/general/wordpress
+sudo find /var/nfs/general/wordpress/ -type d -exec chmod 755 {} \;
+sudo find /var/nfs/general/wordpress/ -type f -exec chmod 644 {} \;
+sudo systemctl restart nfs-kernel-server
+sudo exportfs -a
 
 ```
 
